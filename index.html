@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Killarney Live Drag Times</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+</head>
+<body class="bg-slate-900 text-white min-h-screen font-sans flex flex-col justify-between">
+
+    <!-- Top Header -->
+    <header class="bg-red-700 p-4 shadow-lg text-center font-bold text-xl tracking-wider uppercase border-b-4 border-red-900">
+        Killarney Live Timing
+    </header>
+
+    <!-- Main Workspace -->
+    <main class="flex-grow p-4 max-w-md mx-auto w-full">
+        
+        <!-- Setup Screen (Driver inputs their number) -->
+        <div id="authView" class="bg-slate-800 p-6 rounded-2xl shadow-xl mt-8 border border-slate-700 text-center">
+            <h2 class="text-xl font-bold mb-2 text-red-400">Welcome Racers</h2>
+            <p class="text-sm text-slate-400 mb-6">Enter your competition number below to get instant digital timeslips in the pits.</p>
+            <input id="driverCarNum" type="number" placeholder="Enter Car/Bike #" class="w-full bg-slate-900 border border-slate-600 text-center text-2xl font-bold py-3 rounded-xl mb-4 text-white focus:outline-none focus:border-red-500">
+            <button onclick="saveDriverNumber()" class="w-full bg-red-600 hover:bg-red-700 active:scale-95 font-bold py-4 rounded-xl text-lg transition shadow-md shadow-red-900/30">Start Tracking Runs</button>
+        </div>
+
+        <!-- Live Dashboard Screen -->
+        <div id="dashboardView" class="hidden space-y-6">
+            <!-- Active Driver Status Card -->
+            <div class="flex justify-between items-center bg-slate-800 px-4 py-3 rounded-xl border border-slate-700">
+                <div><span class="text-xs text-slate-400 block uppercase font-semibold">Tracking Vehicle</span><span id="displayCarNum" class="text-xl font-black text-red-400">#--</span></div>
+                <button onclick="clearDriverNumber()" class="text-xs bg-slate-700 hover:bg-slate-600 px-3 py-2 rounded-lg text-slate-300 font-medium">Change No.</button>
+            </div>
+
+            <!-- Latest Personal Timeslip -->
+            <div>
+                <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 px-1">Your Latest Run</h3>
+                <div id="latestSlip" class="bg-gradient-to-br from-slate-800 to-slate-850 p-6 rounded-2xl border-2 border-red-500 shadow-xl text-center">
+                    <p class="text-slate-500 my-4 italic">No runs recorded yet for this number today.</p>
+                </div>
+            </div>
+
+            <!-- Live Ticker (Last 3 Track Runs) -->
+            <div>
+                <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 px-1">Live Track Ticker</h3>
+                <div id="liveTicker" class="space-y-2">
+                    <!-- Instantly populated by Javascript -->
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="text-center py-4 text-xs text-slate-500 border-t border-slate-800">
+        Real-time bridge by Tower Control
+    </footer>
+
+    <!-- Firebase & App Script Logic -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getDatabase, ref, onValue, query, limitToLast } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+        // CONFIGURATION: Replace with your actual Firebase Realtime Database URL
+        const firebaseConfig = { databaseURL:"https://killarney-live-default-rtdb.firebaseio.com/"};
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        let myCarNum = localStorage.getItem("racer_number");
+
+        window.saveDriverNumber = function() {
+            const num = document.getElementById("driverCarNum").value.trim();
+            if(!num) return alert("Please enter a valid competition number.");
+            localStorage.setItem("racer_number", num);
+            myCarNum = num;
+            initDashboard();
+        }
+
+        window.clearDriverNumber = function() {
+            localStorage.removeItem("racer_number");
+            document.getElementById("dashboardView").classList.add("hidden");
+            document.getElementById("authView").classList.remove("hidden");
+        }
+
+        function initDashboard() {
+            document.getElementById("authView").classList.add("hidden");
+            document.getElementById("dashboardView").classList.remove("hidden");
+            document.getElementById("displayCarNum").innerText = `#${myCarNum}`;
+            startDatabaseListeners();
+        }
+
+        function startDatabaseListeners() {
+            const runsRef = query(ref(db, "runs"), limitToLast(20));
+            onValue(runsRef, (snapshot) => {
+                if (!snapshot.exists()) return;
+                const data = snapshot.val();
+                const allRuns = Object.values(data).reverse(); // Newest first
+
+                // 1. Update Personal Slip
+                const personalRun = allRuns.find(run => String(run.car) === String(myCarNum));
+                const latestSlipDiv = document.getElementById("latestSlip");
+                if(personalRun) {
+                    latestSlipDiv.innerHTML = `
+                        <div class="flex justify-between border-b border-slate-700 pb-3 mb-4">
+                            <span class="bg-red-600 text-white font-bold text-xs px-2.5 py-1 rounded uppercase tracking-wider">${personalRun.lane} Lane</span>
+                            <span class="text-xs text-slate-400 font-mono">${personalRun.time || ""}</span>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="bg-slate-900/50 p-3 rounded-xl border border-slate-700/50">
+                                <span class="text-xs text-slate-400 block uppercase font-medium tracking-wide">Elapsed Time</span>
+                                <span class="text-4xl font-black text-white font-mono">${parseFloat(personalRun.et).toFixed(2)}s</span>
+                            </div>
+                            <div class="bg-slate-900/50 p-3 rounded-xl border border-slate-700/50">
+                                <span class="text-xs text-slate-400 block uppercase font-medium tracking-wide">Exit Speed</span>
+                                <span class="text-3xl font-black text-emerald-400 font-mono">${Math.round(personalRun.speed)} <span class="text-xs block text-slate-400 font-sans tracking-normal font-normal">km/h</span></span>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                // 2. Update Public Live Ticker (Top 3 overall)
+                const tickerDiv = document.getElementById("liveTicker");
+                tickerDiv.innerHTML = "";
+                allRuns.slice(0, 3).forEach(run => {
+                    const row = document.createElement("div");
+                    row.className = "flex justify-between items-center bg-slate-800/60 px-4 py-3 rounded-xl border border-slate-700 text-sm animate-fade-in";
+                    row.innerHTML = `
+                        <div class="flex items-center gap-3">
+                            <span class="font-extrabold text-slate-300 w-12">#${run.car}</span>
+                            <span class="text-xs px-1.5 py-0.5 rounded font-bold uppercase tracking-wider ${run.lane === 'Left' ? 'bg-blue-900/60 text-blue-300 border border-blue-700/50' : 'bg-amber-900/60 text-amber-300 border border-amber-700/50'}">${run.lane[0]}</span>
+                        </div>
+                        <div class="font-mono font-bold flex gap-4 text-right">
+                            <span class="text-white">${parseFloat(run.et).toFixed(2)}s</span>
+                            <span class="text-slate-400 w-20">${Math.round(run.speed)} km/h</span>
+                        </div>
+                    `;
+                    tickerDiv.appendChild(row);
+                });
+            });
+        }
+
+        if(myCarNum) initDashboard();
+    </script>
+</body>
+</html>
