@@ -9,7 +9,12 @@
 <body class="bg-slate-950 text-white p-4">
     <div class="max-w-md mx-auto">
         <h1 class="text-2xl font-black text-emerald-500 mb-4">LIVE RESULTS</h1>
-        <input type="text" id="search" placeholder="Enter Race Number (e.g. A1-55)" class="w-full p-3 mb-4 rounded-xl bg-slate-900 border border-slate-700">
+        
+        <div class="flex gap-2 mb-4">
+            <input type="text" id="search" placeholder="Enter Race Number (e.g. A1-55)" class="flex-grow p-3 rounded-xl bg-slate-900 border border-slate-700">
+            <button onclick="render()" class="bg-emerald-600 px-4 rounded-xl font-bold">Search</button>
+        </div>
+
         <div id="results" class="flex flex-col gap-3"></div>
     </div>
 
@@ -22,13 +27,14 @@
 
         onValue(ref(db, "runs"), (snapshot) => {
             allRuns = [];
-            snapshot.forEach(child => allRuns.unshift(child.val()));
+            snapshot.forEach(child => {
+                const run = child.val();
+                if (run.left && run.right) allRuns.unshift(run);
+            });
             render();
         });
 
-        document.getElementById('search').addEventListener('input', render);
-
-        function render() {
+        window.render = () => {
             const filter = document.getElementById('search').value.toLowerCase();
             const container = document.getElementById('results');
             container.innerHTML = '';
@@ -41,11 +47,11 @@
                     <div class="grid grid-cols-2 gap-2 text-center text-xs">
                         <div class="${run.winner === 'Left' ? 'bg-emerald-900/30 border border-emerald-500' : 'bg-slate-950'} p-2 rounded">
                             <div class="font-bold">LEFT: ${run.left.car}</div>
-                            <div>ET: ${run.left.et}s | ${run.left.speed} km/h</div>
+                            <div>ET: ${run.left.et}s</div>
                         </div>
                         <div class="${run.winner === 'Right' ? 'bg-emerald-900/30 border border-emerald-500' : 'bg-slate-950'} p-2 rounded">
                             <div class="font-bold">RIGHT: ${run.right.car}</div>
-                            <div>ET: ${run.right.et}s | ${run.right.speed} km/h</div>
+                            <div>ET: ${run.right.et}s</div>
                         </div>
                     </div>
                 `;
@@ -55,4 +61,5 @@
     </script>
 </body>
 </html>
+
 
