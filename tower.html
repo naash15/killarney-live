@@ -3,128 +3,69 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Tower Input Terminal</title>
+    <title>Tower Pro Terminal</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
 </head>
-<body class="bg-slate-955 text-white min-h-screen font-sans flex flex-col justify-between select-none touch-manipulation">
+<body class="bg-slate-950 text-white min-h-screen font-sans p-4">
 
-    <main class="flex-grow p-3 max-w-md mx-auto w-full flex flex-col justify-between gap-2">
-        
-        <div class="grid grid-cols-2 gap-3 h-14 shrink-0">
-            <button id="laneLeft" onclick="setLane('Left')" class="rounded-xl font-black text-lg border-2 border-blue-500 bg-blue-900/40 text-blue-300 shadow-md">LEFT LANE</button>
-            <button id="laneRight" onclick="setLane('Right')" class="rounded-xl font-black text-lg border border-slate-700 bg-slate-900 text-slate-500 opacity-40">RIGHT LANE</button>
+    <main class="max-w-md mx-auto flex flex-col gap-4">
+        <div class="flex justify-between items-center">
+            <h1 class="font-black text-xl text-emerald-500">RACE CONTROL</h1>
+            <button onclick="clearDatabase()" class="bg-red-900/30 text-red-400 px-3 py-1 rounded text-xs font-bold border border-red-900">CLEAR DB</button>
         </div>
 
-        <div class="grid grid-cols-3 gap-2 bg-slate-900 p-3 rounded-2xl border border-slate-800 shadow-inner shrink-0">
-            <div id="box-car" onclick="setActiveField('car')" class="bg-slate-950 p-2.5 rounded-xl border-2 border-red-500 text-center">
-                <span class="text-[10px] text-slate-500 uppercase font-bold tracking-wider block">Car #</span>
-                <span id="val-car" class="text-xl font-black font-mono text-white block h-7 mt-0.5"></span>
+        <input id="val-class" type="text" placeholder="Enter Class (e.g. A1)" class="w-full bg-slate-900 border border-slate-700 p-3 rounded-xl font-bold uppercase">
+
+        <div class="grid grid-cols-2 gap-4">
+            <div id="box-Left" class="bg-slate-900 p-3 rounded-xl border border-blue-900">
+                <h2 class="text-blue-400 font-bold mb-2">LEFT LANE</h2>
+                <input id="car-Left" type="number" placeholder="Car #" class="w-full bg-slate-950 p-2 mb-1 rounded font-mono">
+                <input id="et-Left" type="number" step="0.001" placeholder="ET" class="w-full bg-slate-950 p-2 mb-1 rounded font-mono">
+                <input id="speed-Left" type="number" placeholder="Speed" class="w-full bg-slate-950 p-2 rounded font-mono">
+                <button onclick="setWinner('Left')" class="mt-2 w-full py-1 bg-slate-800 rounded font-bold text-xs" id="win-Left">SELECT WINNER</button>
             </div>
-            <div id="box-et" onclick="setActiveField('et')" class="bg-slate-950 p-2.5 rounded-xl border border-slate-800 text-center">
-                <span class="text-[10px] text-slate-500 uppercase font-bold tracking-wider block">E.T.</span>
-                <span id="val-et" class="text-xl font-black font-mono text-slate-400 block h-7 mt-0.5"></span>
-            </div>
-            <div id="box-speed" onclick="setActiveField('speed')" class="bg-slate-950 p-2.5 rounded-xl border border-slate-800 text-center">
-                <span class="text-[10px] text-slate-500 uppercase font-bold tracking-wider block">Speed</span>
-                <span id="val-speed" class="text-xl font-black font-mono text-slate-400 block h-7 mt-0.5"></span>
+            <div id="box-Right" class="bg-slate-900 p-3 rounded-xl border border-amber-900">
+                <h2 class="text-amber-400 font-bold mb-2">RIGHT LANE</h2>
+                <input id="car-Right" type="number" placeholder="Car #" class="w-full bg-slate-950 p-2 mb-1 rounded font-mono">
+                <input id="et-Right" type="number" step="0.001" placeholder="ET" class="w-full bg-slate-950 p-2 mb-1 rounded font-mono">
+                <input id="speed-Right" type="number" placeholder="Speed" class="w-full bg-slate-950 p-2 rounded font-mono">
+                <button onclick="setWinner('Right')" class="mt-2 w-full py-1 bg-slate-800 rounded font-bold text-xs" id="win-Right">SELECT WINNER</button>
             </div>
         </div>
 
-        <div class="grid grid-cols-3 gap-2 flex-grow min-h-[280px]">
-            <button onclick="press('1')" class="bg-slate-800 hover:bg-slate-700 active:bg-slate-600 rounded-xl font-black text-2xl font-mono shadow border-b-4 border-slate-900">1</button>
-            <button onclick="press('2')" class="bg-slate-800 hover:bg-slate-700 active:bg-slate-600 rounded-xl font-black text-2xl font-mono shadow border-b-4 border-slate-900">2</button>
-            <button onclick="press('3')" class="bg-slate-800 hover:bg-slate-700 active:bg-slate-600 rounded-xl font-black text-2xl font-mono shadow border-b-4 border-slate-900">3</button>
-            <button onclick="press('4')" class="bg-slate-800 hover:bg-slate-700 active:bg-slate-600 rounded-xl font-black text-2xl font-mono shadow border-b-4 border-slate-900">4</button>
-            <button onclick="press('5')" class="bg-slate-800 hover:bg-slate-700 active:bg-slate-600 rounded-xl font-black text-2xl font-mono shadow border-b-4 border-slate-900">5</button>
-            <button onclick="press('6')" class="bg-slate-800 hover:bg-slate-700 active:bg-slate-600 rounded-xl font-black text-2xl font-mono shadow border-b-4 border-slate-900">6</button>
-            <button onclick="press('7')" class="bg-slate-800 hover:bg-slate-700 active:bg-slate-600 rounded-xl font-black text-2xl font-mono shadow border-b-4 border-slate-900">7</button>
-            <button onclick="press('8')" class="bg-slate-800 hover:bg-slate-700 active:bg-slate-600 rounded-xl font-black text-2xl font-mono shadow border-b-4 border-slate-900">8</button>
-            <button onclick="press('9')" class="bg-slate-800 hover:bg-slate-700 active:bg-slate-600 rounded-xl font-black text-2xl font-mono shadow border-b-4 border-slate-900">9</button>
-            <button onclick="press('.')" class="bg-slate-800 hover:bg-slate-700 active:bg-slate-600 rounded-xl font-black text-2xl font-mono shadow border-b-4 border-slate-900">.</button>
-            <button onclick="press('0')" class="bg-slate-800 hover:bg-slate-700 active:bg-slate-600 rounded-xl font-black text-2xl font-mono shadow border-b-4 border-slate-900">0</button>
-            <button onclick="press('CLR')" class="bg-amber-600/20 text-amber-400 font-bold text-lg rounded-xl border border-amber-500/30 shadow active:bg-amber-500/20">CLR</button>
-        </div>
-
-        <div class="grid grid-cols-4 gap-2 h-16 shrink-0 mt-1">
-            <button onclick="press('NEXT')" class="col-span-1 bg-slate-700 text-slate-200 font-bold rounded-xl active:scale-95 text-sm uppercase">Next<br>Field</button>
-            <button onclick="submitRunData()" class="col-span-3 bg-emerald-600 hover:bg-emerald-500 font-black text-xl rounded-xl active:scale-95 text-white tracking-wider shadow-lg shadow-emerald-950/50 uppercase">Print Pits & Send</button>
-        </div>
+        <button onclick="submitRun()" class="bg-emerald-600 p-4 rounded-xl font-black text-xl uppercase shadow-lg">Print Pits & Send</button>
     </main>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getDatabase, ref, push } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+        import { getDatabase, ref, push, set, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-        // Check gatekeeper PIN code
-        const pass = prompt("Enter Tower Terminal PIN:");
-        if (pass !== "1234") {
-            alert("Access Denied");
-            document.body.innerHTML = "<h1 class='text-center text-red-500 mt-20 font-bold'>Unauthorized Terminal</h1>";
+        const pass = prompt("Enter PIN:");
+        if(pass !== "1234") window.location.reload();
+
+        const db = getDatabase(initializeApp({ databaseURL: "https://killarney-live-default-rtdb.firebaseio.com/" }));
+        let winner = '';
+
+        window.setWinner = (lane) => {
+            winner = lane;
+            document.getElementById('win-Left').className = lane === 'Left' ? "mt-2 w-full py-1 bg-emerald-600 rounded font-bold text-xs" : "mt-2 w-full py-1 bg-slate-800 rounded font-bold text-xs";
+            document.getElementById('win-Right').className = lane === 'Right' ? "mt-2 w-full py-1 bg-emerald-600 rounded font-bold text-xs" : "mt-2 w-full py-1 bg-slate-800 rounded font-bold text-xs";
         }
 
-        const firebaseConfig = { databaseURL: "https://killarney-live-default-rtdb.firebaseio.com/" };
-        const app = initializeApp(firebaseConfig);
-        const db = getDatabase(app);
-
-        let currentLane = 'Left';
-        let activeField = 'car';
-        let values = { car: '', et: '', speed: '' };
-
-        window.setLane = function(lane) {
-            currentLane = lane;
-            document.getElementById('laneLeft').className = lane === 'Left' ? "rounded-xl font-black text-lg border-2 border-blue-500 bg-blue-900/40 text-blue-300 shadow-md" : "rounded-xl font-bold border border-slate-800 bg-slate-900 text-slate-500 opacity-40";
-            document.getElementById('laneRight').className = lane === 'Right' ? "rounded-xl font-black text-lg border-2 border-amber-500 bg-amber-900/40 text-amber-300 shadow-md" : "rounded-xl font-bold border border-slate-800 bg-slate-900 text-slate-500 opacity-40";
+        window.submitRun = () => {
+            const data = {
+                class: document.getElementById('val-class').value,
+                left: { car: document.getElementById('car-Left').value || 0, et: document.getElementById('et-Left').value || 0, speed: document.getElementById('speed-Left').value || 0 },
+                right: { car: document.getElementById('car-Right').value || 0, et: document.getElementById('et-Right').value || 0, speed: document.getElementById('speed-Right').value || 0 },
+                winner: winner,
+                timestamp: Date.now()
+            };
+            push(ref(db, "runs"), data).then(() => alert("Data Sent!"));
         }
 
-        window.setActiveField = function(field) {
-            activeField = field;
-            ['car', 'et', 'speed'].forEach(f => {
-                const box = document.getElementById(`box-${f}`);
-                const val = document.getElementById(`val-${f}`);
-                if(f === field) {
-                    box.className = "bg-slate-950 p-2.5 rounded-xl border-2 border-red-500 text-center";
-                    val.className = "text-xl font-black font-mono text-white block h-7 mt-0.5";
-                } else {
-                    box.className = "bg-slate-950 p-2.5 rounded-xl border border-slate-800 text-center";
-                    val.className = "text-xl font-black font-mono text-slate-400 block h-7 mt-0.5";
-                }
-            });
-        }
-
-        window.press = function(key) {
-            if(key === 'CLR') {
-                values[activeField] = '';
-            } else if(key === 'NEXT') {
-                if(activeField === 'car') setActiveField('et');
-                else if(activeField === 'et') setActiveField('speed');
-                else setActiveField('car');
-                return;
-            } else {
-                if(key === '.' && values[activeField].includes('.')) return;
-                values[activeField] += key;
-            }
-            document.getElementById(`val-${activeField}`).innerText = values[activeField];
-        }
-
-        window.submitRunData = function() {
-            if(!values.car || !values.et || !values.speed) return alert("All fields must be complete before sending!");
-            
-            const timeStr = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'});
-            
-            push(ref(db, "runs"), {
-                car: values.car,
-                et: values.et,
-                speed: values.speed,
-                lane: currentLane,
-                time: timeStr
-            }).then(() => {
-                values = { car: '', et: '', speed: '' };
-                document.getElementById('val-car').innerText = '';
-                document.getElementById('val-et').innerText = '';
-                document.getElementById('val-speed').innerText = '';
-                setActiveField('car');
-            }).catch(err => alert("Error transmitting run: " + err.message));
+        window.clearDatabase = () => {
+            if(confirm("Wipe all data?")) remove(ref(db, "runs"));
         }
     </script>
 </body>
-</html> 
+</html>
