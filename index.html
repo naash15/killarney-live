@@ -10,9 +10,16 @@
     <div class="max-w-md mx-auto">
         <h1 class="text-2xl font-black text-emerald-500 mb-4">LIVE RESULTS</h1>
         
-        <div class="flex gap-2 mb-4">
-            <input type="text" id="search" placeholder="Enter Car # (e.g. A1-55)" class="flex-grow p-3 rounded-xl bg-slate-900 border border-slate-700">
-            <button onclick="exportCSV()" class="bg-blue-600 hover:bg-blue-500 px-4 rounded-xl font-bold border border-blue-500 text-sm">Export</button>
+        <div class="mb-5">
+            <div class="flex gap-2">
+                <input type="text" id="search" placeholder="Enter Car # (e.g. A1-55)" class="flex-grow p-3 rounded-xl bg-slate-900 border border-slate-700 text-white focus:outline-none focus:border-emerald-500">
+                <button onclick="render()" class="bg-emerald-600 hover:bg-emerald-500 px-5 rounded-xl font-bold shadow-md text-white">Search</button>
+            </div>
+            <div class="flex justify-end mt-2">
+                <button onclick="exportCSV()" class="text-xs text-slate-400 hover:text-blue-400 font-bold uppercase tracking-wider underline transition-colors">
+                    Export Times as CSV
+                </button>
+            </div>
         </div>
 
         <div id="results" class="flex flex-col gap-3"></div>
@@ -48,12 +55,12 @@
                 div.innerHTML = `
                     <div class="grid grid-cols-2 gap-2 text-center text-xs">
                         <div class="${run.winner === 'Left' ? 'bg-emerald-900/30 border border-emerald-500' : 'bg-slate-950'} p-2 rounded">
-                            <div class="font-bold">LEFT: ${run.left.car}</div>
-                            <div>ET: ${run.left.et}s | ${run.left.speed} km/h</div>
+                            <div class="font-bold text-[14px] text-white mb-1">LEFT: ${run.left.car}</div>
+                            <div class="text-slate-300">ET: ${run.left.et}s | ${run.left.speed} km/h</div>
                         </div>
                         <div class="${run.winner === 'Right' ? 'bg-emerald-900/30 border border-emerald-500' : 'bg-slate-950'} p-2 rounded">
-                            <div class="font-bold">RIGHT: ${run.right.car}</div>
-                            <div>ET: ${run.right.et}s | ${run.right.speed} km/h</div>
+                            <div class="font-bold text-[14px] text-white mb-1">RIGHT: ${run.right.car}</div>
+                            <div class="text-slate-300">ET: ${run.right.et}s | ${run.right.speed} km/h</div>
                         </div>
                     </div>
                 `;
@@ -61,27 +68,12 @@
             });
         }
 
-        // Filtered CSV Export
         window.exportCSV = () => {
             const filter = document.getElementById('search').value.toLowerCase();
             const filteredRuns = allRuns.filter(r => !filter || r.left.car.toLowerCase().includes(filter) || r.right.car.toLowerCase().includes(filter));
             
             if(filteredRuns.length === 0) return alert("No runs found to export.");
 
-            let csv = "Time,Winner,Left_Car,Left_ET,Left_Speed,Right_Car,Right_ET,Right_Speed\n";
-            filteredRuns.forEach(r => {
-                csv += `"${r.timestamp || ''}","${r.winner || ''}","${r.left.car}","${r.left.et}","${r.left.speed}","${r.right.car}","${r.right.et}","${r.right.speed}"\n`;
-            });
-
-            const blob = new Blob([csv], { type: 'text/csv' });
-            const a = document.createElement('a');
-            a.href = URL.createObjectURL(blob);
-            a.download = filter ? `Killarney_Times_${filter.toUpperCase()}.csv` : "Killarney_All_Times.csv";
-            a.click();
-        }
-    </script>
-</body>
-</html>
-
+            let csv = "Time,Winner,Left_Car
 
 
