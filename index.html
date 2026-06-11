@@ -8,7 +8,9 @@
 </head>
 <body class="bg-slate-950 text-white p-4">
     <div class="max-w-md mx-auto">
-        <h1 class="text-2xl font-black text-emerald-500 mb-4">LIVE RESULTS</h1>
+        <h1 class="text-2xl font-black text-emerald-500 mb-1">LIVE RESULTS</h1>
+        
+        <div id="statusText" class="text-xs text-slate-500 mb-4 font-mono">Status: Connecting to track...</div>
         
         <div class="mb-5">
             <div class="flex gap-2">
@@ -32,27 +34,20 @@
         const db = getDatabase(initializeApp({ databaseURL: "https://killarney-live-default-rtdb.firebaseio.com/" }));
         let allRuns = [];
 
-        onValue(ref(db, "runs"), (snapshot) => {
-            allRuns = [];
-            snapshot.forEach(child => {
-                const run = child.val();
-                if (run.left && run.right) allRuns.unshift(run);
-            });
-            render();
-        });
-
-        document.getElementById('search').addEventListener('input', render);
-
-        window.render = () => {
+        // 1. We create the layout function FIRST so the search bar doesn't crash
+        function render() {
             const filter = document.getElementById('search').value.toLowerCase();
             const container = document.getElementById('results');
             container.innerHTML = '';
             
+            let count = 0;
             allRuns.filter(r => {
-                const leftCar = String(r.left.car).toLowerCase();
-                const rightCar = String(r.right.car).toLowerCase();
+                // Safety checks added to prevent old corrupted data from breaking the loop
+                const leftCar = String(r.left?.car || '').toLowerCase();
+                const rightCar = String(r.right?.car || '').toLowerCase();
                 return !filter || leftCar.includes(filter) || rightCar.includes(filter);
             }).forEach(run => {
+                count++;
                 const div = document.createElement('div');
                 div.className = "bg-slate-900 p-3 rounded-xl border border-slate-800";
                 div.innerHTML = `
@@ -69,21 +64,44 @@
                 `;
                 container.appendChild(div);
             });
+            
+            // Updates the status so you know if data is flowing
+            document.getElementById('statusText').innerText = "Status: Live (" + count + " runs loaded)";
         }
 
+        // Make the function available to HTML buttons
+        window.render = render;
+
+        // 2. NOW we attach the search bar since render is ready
+        document.getElementById('search').addEventListener('input', render);
+
+        // 3. Connect to Firebase and fetch data
+        onValue(ref(db, "runs"), (snapshot) => {
+            allRuns = [];
+            snapshot.forEach(child => {
+                const run = child.val();
+                if (run && run.left && run.right) allRuns.unshift(run);
+            });
+            render();
+        }, (error) => {
+            // If Firebase blocks us, it prints the error right on the screen!
+            document.getElementById('statusText').innerText = "Status: ERROR - " + error.message;
+        });
+
+        // 4. Export logic
         window.exportCSV = () => {
             const filter = document.getElementById('search').value.toLowerCase();
             const filteredRuns = allRuns.filter(r => {
-                const leftCar = String(r.left.car).toLowerCase();
-                const rightCar = String(r.right.car).toLowerCase();
+                const leftCar = String(r.left?.car || '').toLowerCase();
+                const rightCar = String(r.right?.car || '').toLowerCase();
                 return !filter || leftCar.includes(filter) || rightCar.includes(filter);
             });
             
             if(filteredRuns.length === 0) return alert("No runs found to export.");
 
-            let csv = "Time,Winner,Left_Car,Left_ET,Left_Speed,Right_Car,Right_ET,Right_Speed\\n";
+            let csv = "Time,Winner,Left_Car,Left_ET,Left_Speed,Right_Car,Right_ET,Right_Speed\n";
             filteredRuns.forEach(r => {
-                csv += '"' + (r.timestamp || '') + '","' + (r.winner || '') + '","' + r.left.car + '","' + r.left.et + '","' + r.left.speed + '","' + r.right.car + '","' + r.right.et + '","' + r.right.speed + '"\\n';
+                csv += `"${r.timestamp || ''}","${r.winner || ''}","${r.left?.car || ''}","${r.left?.et || ''}","${r.left?.speed || ''}","${r.right?.car || ''}","${r.right?.et || ''}","${r.right?.speed || ''}"\n`;
             });
 
             const blob = new Blob([csv], { type: 'text/csv' });
@@ -95,6 +113,3 @@
     </script>
 </body>
 </html>
-
-
-
