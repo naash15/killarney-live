@@ -48,18 +48,21 @@
             const container = document.getElementById('results');
             container.innerHTML = '';
             
-            allRuns.filter(r => !filter || r.left.car.toLowerCase().includes(filter) || r.right.car.toLowerCase().includes(filter))
-            .forEach(run => {
+            allRuns.filter(r => {
+                const leftCar = String(r.left.car).toLowerCase();
+                const rightCar = String(r.right.car).toLowerCase();
+                return !filter || leftCar.includes(filter) || rightCar.includes(filter);
+            }).forEach(run => {
                 const div = document.createElement('div');
                 div.className = "bg-slate-900 p-3 rounded-xl border border-slate-800";
                 div.innerHTML = `
                     <div class="grid grid-cols-2 gap-2 text-center text-xs">
                         <div class="${run.winner === 'Left' ? 'bg-emerald-900/30 border border-emerald-500' : 'bg-slate-950'} p-2 rounded">
-                            <div class="font-bold text-[14px] text-white mb-1">LEFT: ${run.left.car}</div>
+                            <div class="font-bold text-sm text-white mb-1">LEFT: ${run.left.car}</div>
                             <div class="text-slate-300">ET: ${run.left.et}s | ${run.left.speed} km/h</div>
                         </div>
                         <div class="${run.winner === 'Right' ? 'bg-emerald-900/30 border border-emerald-500' : 'bg-slate-950'} p-2 rounded">
-                            <div class="font-bold text-[14px] text-white mb-1">RIGHT: ${run.right.car}</div>
+                            <div class="font-bold text-sm text-white mb-1">RIGHT: ${run.right.car}</div>
                             <div class="text-slate-300">ET: ${run.right.et}s | ${run.right.speed} km/h</div>
                         </div>
                     </div>
@@ -70,10 +73,28 @@
 
         window.exportCSV = () => {
             const filter = document.getElementById('search').value.toLowerCase();
-            const filteredRuns = allRuns.filter(r => !filter || r.left.car.toLowerCase().includes(filter) || r.right.car.toLowerCase().includes(filter));
+            const filteredRuns = allRuns.filter(r => {
+                const leftCar = String(r.left.car).toLowerCase();
+                const rightCar = String(r.right.car).toLowerCase();
+                return !filter || leftCar.includes(filter) || rightCar.includes(filter);
+            });
             
             if(filteredRuns.length === 0) return alert("No runs found to export.");
 
-            let csv = "Time,Winner,Left_Car
+            let csv = "Time,Winner,Left_Car,Left_ET,Left_Speed,Right_Car,Right_ET,Right_Speed\\n";
+            filteredRuns.forEach(r => {
+                csv += '"' + (r.timestamp || '') + '","' + (r.winner || '') + '","' + r.left.car + '","' + r.left.et + '","' + r.left.speed + '","' + r.right.car + '","' + r.right.et + '","' + r.right.speed + '"\\n';
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = filter ? "Killarney_Times_" + filter.toUpperCase() + ".csv" : "Killarney_All_Times.csv";
+            a.click();
+        }
+    </script>
+</body>
+</html>
+
 
 
