@@ -8,9 +8,13 @@
 </head>
 <body class="bg-slate-950 text-white p-4">
     <main class="max-w-md mx-auto flex flex-col gap-4">
+        
         <div class="flex justify-between items-center">
             <h1 class="font-black text-xl text-emerald-500">RACE CONTROL</h1>
-            <button onclick="clearDatabase()" class="bg-red-900/30 text-red-400 px-3 py-1 rounded text-xs font-bold border border-red-900">CLEAR DB</button>
+            <div class="flex gap-2">
+                <button onclick="exportAllCSV()" class="bg-blue-900/40 text-blue-400 px-3 py-1 rounded text-xs font-bold border border-blue-800">EXPORT ALL</button>
+                <button onclick="clearDatabase()" class="bg-red-900/30 text-red-400 px-3 py-1 rounded text-xs font-bold border border-red-900">CLEAR DB</button>
+            </div>
         </div>
 
         <div class="grid grid-cols-2 gap-4">
@@ -21,6 +25,7 @@
                 <input id="speed-Left" type="number" placeholder="Speed" class="w-full bg-slate-950 p-2 rounded font-mono">
                 <button onclick="setWinner('Left')" class="mt-2 w-full py-1 bg-slate-800 rounded font-bold text-xs" id="win-Left">SELECT WINNER</button>
             </div>
+            
             <div id="box-Right" class="bg-slate-900 p-3 rounded-xl border border-amber-900">
                 <h2 class="text-amber-400 font-bold mb-2">RIGHT LANE</h2>
                 <input id="car-Right" type="text" placeholder="Car # (e.g. A1-55)" class="w-full bg-slate-950 p-2 mb-1 rounded font-mono">
@@ -29,12 +34,13 @@
                 <button onclick="setWinner('Right')" class="mt-2 w-full py-1 bg-slate-800 rounded font-bold text-xs" id="win-Right">SELECT WINNER</button>
             </div>
         </div>
+        
         <button onclick="submitRun()" class="bg-emerald-600 p-4 rounded-xl font-black text-xl uppercase shadow-lg">Print Pits & Send</button>
     </main>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getDatabase, ref, push, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+        import { getDatabase, ref, push, remove, get } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
         const db = getDatabase(initializeApp({ databaseURL: "https://killarney-live-default-rtdb.firebaseio.com/" }));
         let winner = '';
@@ -49,12 +55,42 @@
             push(ref(db, "runs"), {
                 left: { car: document.getElementById('car-Left').value || '0', et: document.getElementById('et-Left').value || '0', speed: document.getElementById('speed-Left').value || '0' },
                 right: { car: document.getElementById('car-Right').value || '0', et: document.getElementById('et-Right').value || '0', speed: document.getElementById('speed-Right').value || '0' },
-                winner: winner
-            }).then(() => alert("Sent!"));
+                winner: winner,
+                timestamp: new Date().toLocaleString() // Adds time for the CSV
+            }).then(() => {
+                // Clear all input fields automatically
+                ['car-Left', 'et-Left', 'speed-Left', 'car-Right', 'et-Right', 'speed-Right'].forEach(id => {
+                    document.getElementById(id).value = '';
+                });
+                // Reset Winner buttons
+                winner = '';
+                document.getElementById('win-Left').className = "mt-2 w-full py-1 bg-slate-800 rounded font-bold text-xs";
+                document.getElementById('win-Right').className = "mt-2 w-full py-1 bg-slate-800 rounded font-bold text-xs";
+            });
         }
 
-        window.clearDatabase = () => { if(confirm("Wipe all data?")) remove(ref(db, "runs")); }
+        window.clearDatabase = () => { if(confirm("Wipe all data? Did you Export first?")) remove(ref(db, "runs")); }
+
+        // CSV Export for Tower
+        window.exportAllCSV = () => {
+            get(ref(db, "runs")).then((snapshot) => {
+                if (!snapshot.exists()) return alert("No data to export!");
+                let csv = "Time,Winner,Left_Car,Left_ET,Left_Speed,Right_Car,Right_ET,Right_Speed\n";
+                
+                snapshot.forEach(child => {
+                    const r = child.val();
+                    if(r.left && r.right) {
+                        csv += `"${r.timestamp || ''}","${r.winner || ''}","${r.left.car}","${r.left.et}","${r.left.speed}","${r.right.car}","${r.right.et}","${r.right.speed}"\n`;
+                    }
+                });
+                
+                const blob = new Blob([csv], { type: 'text/csv' });
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = "Full_Race_Day_Backup.csv";
+                a.click();
+            });
+        }
     </script>
 </body>
 </html>
-
